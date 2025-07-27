@@ -511,6 +511,8 @@ namespace humanoid_controller
     if (!is_initialized_)
       is_initialized_ = true;
   }
+
+
   void humanoidController::checkAndPublishCommandLine(const vector_t &joystick_origin_axis)
   {
 
@@ -528,7 +530,7 @@ namespace humanoid_controller
     CommandData_ = getCommandData();
 
     auto updated = commandLineToTargetTrajectories(joystick_origin_axis, cmdVel_);
-    
+
     if (!Walkenable_)
     {
       CommandData_.setzero();
@@ -536,6 +538,7 @@ namespace humanoid_controller
       setCommandData(CommandData_);
       return;
     }
+    // 如果没有更新的命令，则发送零速度指令
     if (!std::any_of(updated.begin(), updated.end(), [](bool x) { return x; }))
     {
       if (!send_zero_twist)
@@ -549,6 +552,7 @@ namespace humanoid_controller
       setCommandData(CommandData_);
       return;
     }
+    // 如果有更新的命令
     send_zero_twist = false;
     cmdTrotgait_ = false;
     CommandData_.cmdVelLineX_ = cmdVel_.linear.x;
@@ -565,10 +569,12 @@ namespace humanoid_controller
     std::vector<bool> updated(6, false);
     Eigen::Vector4d limit_vector;
     limit_vector = velocityLimits_;
+    // 主要是将后退的速度限制为0.5倍，前进的速度不影响，后面会乘回来
     limit_vector(0) *= 0.5;
     double dead_zone = 0.05;
     if (joystick_origin_axis.cwiseAbs().maxCoeff() < dead_zone)
       return updated; // command line is zero, do nothing
+    // 如果摇杆的第一个轴（前后）大于0.5，则将角速度限制为到一半，并且如果摇杆的第一个轴大于0，则将线速度的x分量乘以2
     if (abs(joystick_origin_axis(0)) > 0.5)
     {
       limit_vector(3) *= 0.5;
