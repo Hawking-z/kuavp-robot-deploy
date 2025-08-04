@@ -649,6 +649,7 @@ namespace humanoid_controller
     // 按键处理
     // 触发服务调用，初始化人形机器人控制器（real_initial_start 服务） 这个服务是执行机器人站立
     // 机器人cali状态执行一次机器人缩腿，再执行一次机器人站立，用户需要在站立过程中用手扶住机器人以确保安全，实机才有该服务
+    // 对于h12遥控器来说，就是右上角的拨杆拨到最左边，这个时候就是相当于按下start按钮
     if (!oldJoyMsg_.buttons[joyButtonMap["BUTTON_START"]] && joy_msg->buttons[joyButtonMap["BUTTON_START"]])
     {
       ros::ServiceClient client = controllerNh_.serviceClient<std_srvs::Trigger>("/humanoid_controller/real_initial_start");
@@ -1209,8 +1210,9 @@ namespace humanoid_controller
     double eps = 0.2;
     // phase_ = CommandData_.cmdStance_ == 1 ? 0 : episodeLength_ * dt_ / cycleTime_;
     phase_ = episodeLength_ * dt_ / cycleTime_;
-    commandPhase_(0) = sin(2 * M_PI * phase_);
-    commandPhase_(1) = cos(2 * M_PI * phase_);
+    commandPhase_(0) = sin(2 * M_PI * phase_) * (1 - CommandData_.cmdStance_);
+    commandPhase_(1) = sin(2 * M_PI * (phase_ + 0.5))* (1 - CommandData_.cmdStance_);
+
     commandPhase_(2) = commandPhase_(0) / (sqrt(commandPhase_(0) * commandPhase_(0) + eps*eps));
     rl_plannedMode_ = (commandPhase_(0) > 0) ? ModeNumber::SF : (commandPhase_(0) < 0) ? ModeNumber::FS
                                                                                        : ModeNumber::SS;
@@ -1256,6 +1258,8 @@ namespace humanoid_controller
     // Normalize command
     CommandData_.scale();
     Eigen::VectorXd tempCommand_ = CommandData_.getCommand();
+    // stand command is 0 , walking command is 1
+    tempCommand_(3) = 1 - tempCommand_(3); // 0-1 -> 1-0
     // Populate singleInputDataMap_
     const std::map<std::string, Eigen::VectorXd> singleInputDataMap_ = {
         {"baseEuler", baseEuler},

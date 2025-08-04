@@ -2,15 +2,15 @@ withArm            false   ; 是否使用手臂训练 0:不使用 1:使用
 inferenceFrequency 100     ; 推理频率
 
 actionScale        0.5    ; default
-frameStack         15      ; 多长时间步的obs
+frameStack         20      ; 多长时间步的obs
 numSingleObs       48      ; 单一时刻的obs的维度
-cycleTime          0.6     ; 周期时间为0.64s
+cycleTime          0.8     ; 周期时间为0.8s
 phase              0       ; 初始相位设置为0
 episodeLength      0       ; 用于计算相位，每走一个step就加1
 clipObservations   100.0    ; 用于对输入进行clip
 clipActions        10.0    ; 用于对actions进行clip
 
-networkModelFile          /policy_5.onnx       ; 
+networkModelFile          /policy_1.onnx       ; 
 commandData 
 {
     inital
@@ -66,15 +66,15 @@ defaultJointState
     ; 定义各关节的默认状态
     (0,0)  -0.       ; leg_l1_joint
     (1,0)  -0.       ; leg_l2_joint
-    (2,0)  -0.35     ; leg_l3_joint
-    (3,0)   0.7     ; leg_l4_joint
-    (4,0)  -0.35      ; leg_l5_joint
+    (2,0)  -0.3     ; leg_l3_joint
+    (3,0)   0.545     ; leg_l4_joint
+    (4,0)  -0.245      ; leg_l5_joint
     (5,0)   0.       ; leg_l6_joint
     (6,0)   0.       ; leg_r1_joint
     (7,0)   0.       ; leg_r2_joint
-    (8,0)  -0.35     ; leg_r3_joint
-    (9,0)   0.7     ; leg_r4_joint
-    (10,0) -0.35      ; leg_r5_joint
+    (8,0)  -0.3     ; leg_r3_joint
+    (9,0)   0.545     ; leg_r4_joint
+    (10,0) -0.245      ; leg_r5_joint
     (11,0) -0.       ; leg_r6_joint
 
     (12,0)  0       ; zarm_l1_joint
@@ -410,13 +410,13 @@ singleInputData
     command
     {
         startIdx    0
-        numIdx      3
+        numIdx      4
         obsScales   1.0
     }
     commandPhase
     {
         startIdx    0
-        numIdx      3
+        numIdx      2
         obsScales   1.0
     }
     jointPos
