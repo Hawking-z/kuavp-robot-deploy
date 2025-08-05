@@ -2,7 +2,7 @@ withArm            false   ; 是否使用手臂训练 0:不使用 1:使用
 inferenceFrequency 100     ; 推理频率
 
 actionScale        0.5    ; default
-frameStack         20      ; 多长时间步的obs
+frameStack         25      ; 多长时间步的obs
 numSingleObs       48      ; 单一时刻的obs的维度
 cycleTime          0.8     ; 周期时间为0.8s
 phase              0       ; 初始相位设置为0
@@ -10,7 +10,7 @@ episodeLength      0       ; 用于计算相位，每走一个step就加1
 clipObservations   100.0    ; 用于对输入进行clip
 clipActions        10.0    ; 用于对actions进行clip
 
-networkModelFile          /policy_1.onnx       ; 
+networkModelFile          /policy_2.onnx       ; 
 commandData 
 {
     inital
