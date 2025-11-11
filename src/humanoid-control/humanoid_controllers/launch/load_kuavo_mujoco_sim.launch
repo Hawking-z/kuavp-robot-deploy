@@ -22,7 +22,7 @@
     <include file="$(find humanoid_controllers)/launch/robot_version_manager.launch">
       <arg name="robot_version" value="$(arg robot_version)"/>
     </include>
-    <arg name="rl_param"  default="$(find humanoid_controllers)/config/kuavo_v$(arg robot_version)/rl/zyc_rl_param.info"/>
+    <arg name="rl_param"  default="$(find humanoid_controllers)/config/kuavo_v$(arg robot_version)/rl/skw_rl_param.info"/>
     <arg name="network_model_file" default="$(find humanoid_controllers)/model/networks"/>
 
     <!-- make the files into global parameters -->

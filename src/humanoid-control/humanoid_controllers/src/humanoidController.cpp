@@ -61,7 +61,130 @@ namespace humanoid_controller
     }
     exit(1);
   }
-
+  // void humanoidController::keyboard_thread_func()
+  // {
+  //   usleep(100000);
+  //   struct sched_param param;
+  //   param.sched_priority = 0;
+  //   auto result = pthread_setschedparam(pthread_self(), SCHED_OTHER, &param);
+  //   if (result != 0)
+  //   {
+  //     std::cerr << "Failed to set keyboard_thread_func's scheduling parameters. Error: " << strerror(result) << std::endl;
+  //   }
+  //   ros::NodeHandle nh;
+  //   char Walk_Command = '\0';
+  //   while (ros::ok())
+  //   {
+  //     CommandData CommandData_;
+  //     CommandData_ = getCommandData();
+  //     if (hardware_status_ != 1)
+  //     {
+  //       usleep(100000);
+  //       continue;
+  //     }
+  //     if (kbhit())
+  //     {
+  //       Walk_Command = getchar();
+  //       if (Walk_Command == '\n' || Walk_Command == '\0')
+  //       {
+  //         continue;
+  //       }
+  //       // 首先，将光标移动到上一行的开始
+  //       std::cout << "\033[F";
+  //       // 然后，清除当前行（从光标位置到行尾）
+  //       std::cout << "\033[K";
+  //       std::cout << "[keyboard command]: " << Walk_Command << std::endl;
+  //       if (Walk_Command == 'x')
+  //       {
+  //         std::cout << "x" << std::endl;
+  //         for (int i = 0; i < 5; i++)
+  //         {
+  //           std::cout << "publish stop message" << std::endl;
+  //           std_msgs::Bool stop_msg;
+  //           stop_msg.data = true;
+  //           stop_pub.publish(stop_msg);
+  //           ros::Duration(0.1).sleep();
+  //         }
+  //       }
+  //       // else if (Walk_Command == 'f')
+  //       // {
+  //       //   wbc_only_ = !wbc_only_;
+  //       //   std::cout << "start using mpc: " << !wbc_only_ << std::endl;
+  //       // }
+  //       // else if (Walk_Command == 'v')
+  //       // {
+  //       //   std::cout << "v" << std::endl;
+  //       //   control_mode_ = (control_mode_ == 1) ? 2 : 1;
+  //       //   std::cout << "control mode:" << control_mode_ << std::endl;
+  //       // }
+  //       // else if (Walk_Command == 't')
+  //       // {
+  //       //   control_mode_ = (control_mode_ == 0) ? 2 : 0;
+  //       //   std::cout << "control mode:" << control_mode_ << std::endl;
+  //       // }
+  //       else if (Walk_Command == 'l')
+  //       {
+  //         // CommandData_ = initialCommandData_;
+  //         is_rl_controller_ = true;
+  //         printRLparam();
+  //       }
+  //       else if (Walk_Command == 'w')
+  //       {
+  //         CommandData_.cmdStance_ = 0;
+  //         CommandData_.cmdVelLineX_ += 0.1;
+  //         ROS_INFO_STREAM("Velocity linear x: " << CommandData_.cmdVelLineX_);
+  //       }
+  //       else if (Walk_Command == 's')
+  //       {
+  //         CommandData_.cmdStance_ = 0;
+  //         CommandData_.cmdVelLineX_ -= 0.1;
+  //         ROS_INFO_STREAM("Velocity linear x: " << CommandData_.cmdVelLineX_);
+  //       }
+  //       else if (Walk_Command == 'a')
+  //       {
+  //         CommandData_.cmdStance_ = 0;
+  //         CommandData_.cmdVelLineY_ += 0.1;
+  //         ROS_INFO_STREAM("Velocity linear y: " << CommandData_.cmdVelLineY_);
+  //       }
+  //       else if (Walk_Command == 'd')
+  //       {
+  //         CommandData_.cmdStance_ = 0;
+  //         CommandData_.cmdVelLineY_ -= 0.1;
+  //         ROS_INFO_STREAM("Velocity linear y: " << CommandData_.cmdVelLineY_);
+  //       }
+  //       else if (Walk_Command == 'q')
+  //       {
+  //         CommandData_.cmdStance_ = 0;
+  //         CommandData_.cmdVelAngularZ_ += 0.1;
+  //         ROS_INFO_STREAM("Velocity angular z: " << CommandData_.cmdVelAngularZ_);
+  //       }
+  //       else if (Walk_Command == 'e')
+  //       {
+  //         CommandData_.cmdStance_ = 0;
+  //         CommandData_.cmdVelAngularZ_ -= 0.1;
+  //         ROS_INFO_STREAM("Velocity angular z: " << CommandData_.cmdVelAngularZ_);
+  //       }
+  //       else if (Walk_Command == ' ')
+  //       {
+  //         CommandData_.setzero();
+  //         CommandData_.cmdStance_ = initialCommandData_.cmdStance_;
+  //         ROS_INFO_STREAM("Velocity linear x: " << CommandData_.cmdVelLineX_);
+  //         ROS_INFO_STREAM("Velocity linear y: " << CommandData_.cmdVelLineY_);
+  //         ROS_INFO_STREAM("Velocity angular z: " << CommandData_.cmdVelAngularZ_);
+  //       }
+  //       else if (Walk_Command == 'm')
+  //       {
+  //         CommandData_.setzero();
+  //         ROS_INFO_STREAM("Velocity linear x: " << CommandData_.cmdVelLineX_);
+  //         ROS_INFO_STREAM("Velocity linear y: " << CommandData_.cmdVelLineY_);
+  //         ROS_INFO_STREAM("Velocity angular z: " << CommandData_.cmdVelAngularZ_);
+  //       }
+  //       setCommandData(CommandData_);
+  //       Walk_Command = '\0';
+  //     }
+  //     usleep(50000);
+  //   }
+  // }
   void humanoidController::printRLparam()
   {
     std::cout << "[RL param]:Inital Command: " << initialCommandData_.getCommand().transpose() << std::endl;
@@ -184,9 +307,9 @@ namespace humanoid_controller
 
     sensors_data_buffer_ptr_ = new KuavoDataBuffer<SensorData>("humanoid_sensors_data_buffer", buffer_size, dt_);
 
-    bool verbose = true;
+    bool verbose = false;
     // std::cout << "verbose: " << verbose << std::endl;
-    // loadData::loadCppDataType(taskFile, "humanoid_interface.verbose", verbose);
+    loadData::loadCppDataType(taskFile, "humanoid_interface.verbose", verbose);
     setupHumanoidInterface(taskFile, urdfFile, referenceFile, gaitCommandFile, verbose, robot_version_int);
 
     ros::NodeHandle nh;
@@ -275,7 +398,7 @@ namespace humanoid_controller
     // rl
     singleInputData.resize(numSingleObs_);
     networkInputData_.resize(numSingleObs_ * frameStack_);
-    commandPhase_.resize(3);
+    commandPhase_.resize(2);
     actions_.resize(jointNum_ + jointArmNum_);
     singleInputData.setZero();
     networkInputData_.setZero();
@@ -511,11 +634,8 @@ namespace humanoid_controller
     if (!is_initialized_)
       is_initialized_ = true;
   }
-
-
   void humanoidController::checkAndPublishCommandLine(const vector_t &joystick_origin_axis)
   {
-
     geometry_msgs::Twist cmdVel_;
     cmdVel_.linear.x = 0;
     cmdVel_.linear.y = 0;
@@ -523,14 +643,10 @@ namespace humanoid_controller
     cmdVel_.angular.x = 0;
     cmdVel_.angular.y = 0;
     cmdVel_.angular.z = 0;
-    // 
     static bool send_zero_twist = false;
-    
     CommandData CommandData_;
     CommandData_ = getCommandData();
-
     auto updated = commandLineToTargetTrajectories(joystick_origin_axis, cmdVel_);
-
     if (!Walkenable_)
     {
       CommandData_.setzero();
@@ -538,7 +654,6 @@ namespace humanoid_controller
       setCommandData(CommandData_);
       return;
     }
-    // 如果没有更新的命令，则发送零速度指令
     if (!std::any_of(updated.begin(), updated.end(), [](bool x) { return x; }))
     {
       if (!send_zero_twist)
@@ -552,7 +667,6 @@ namespace humanoid_controller
       setCommandData(CommandData_);
       return;
     }
-    // 如果有更新的命令
     send_zero_twist = false;
     cmdTrotgait_ = false;
     CommandData_.cmdVelLineX_ = cmdVel_.linear.x;
@@ -569,12 +683,10 @@ namespace humanoid_controller
     std::vector<bool> updated(6, false);
     Eigen::Vector4d limit_vector;
     limit_vector = velocityLimits_;
-    // 主要是将后退的速度限制为0.5倍，前进的速度不影响，后面会乘回来
     limit_vector(0) *= 0.5;
     double dead_zone = 0.05;
     if (joystick_origin_axis.cwiseAbs().maxCoeff() < dead_zone)
       return updated; // command line is zero, do nothing
-    // 如果摇杆的第一个轴（前后）大于0.5，则将角速度限制为到一半，并且如果摇杆的第一个轴大于0，则将线速度的x分量乘以2
     if (abs(joystick_origin_axis(0)) > 0.5)
     {
       limit_vector(3) *= 0.5;
@@ -613,43 +725,27 @@ namespace humanoid_controller
     // double alpha_ = joystickSensitivity / 1000;
     vector_t joystickOriginAxisFilter_ = vector_t::Zero(6);
     vector_t joystickOriginAxisTemp_ = vector_t::Zero(6);
-    // 消息校验
-    // 检查是否有按钮的值无效（即按钮值的绝对值大于 1）。如果检测到无效按钮，会打印错误信息并提前返回。
     if (std::any_of(joy_msg->buttons.begin(), joy_msg->buttons.end(), [](float button)
                     { return std::abs(button) > 1; }))
     {
       std::cout << "invalide joy msg" << std::endl;
       return;
     }
-    // 验证遥控器消息中按钮的数量是否正确，确保能够正确访问到按钮的值
     if (joy_msg->buttons.size() <= joyButtonMap["BUTTON_START"])
     {
       std::cerr << "[JoyController]:joy_msg has a error length, check your joystick_type!" << std::endl;
       return;
     }
-    // 提取遥控器的轴值（左、右摇杆的位置，以及偏航/旋转值）
     joystickOriginAxisTemp_.head(4) << joy_msg->axes[joyAxisMap["AXIS_LEFT_STICK_X"]], joy_msg->axes[joyAxisMap["AXIS_LEFT_STICK_Y"]], joy_msg->axes[joyAxisMap["AXIS_RIGHT_STICK_Z"]], joy_msg->axes[joyAxisMap["AXIS_RIGHT_STICK_YAW"]];
     joystickOriginAxisFilter_ = joystickOriginAxisTemp_;
-    
-    // 对前四个轴进行滤波，这个滤波器是 LowPassFilter5thOrder 
     joystickOriginAxisFilter_.head(4) = joystickFilter_.update(joystickOriginAxisTemp_.head(4));
-    // 第四个轴没有进行滤波，重新变回原来的值,第四个轴是 AXIS_RIGHT_STICK_YAW
     joystickOriginAxisFilter_(3) = joystickOriginAxisTemp_(3);
-
-    // 禁用行走，摇杆的值归0
     if (!Walkenable_)
     {
       joystickOriginAxisFilter_ = vector_t::Zero(6);
     }
-    // 设置joy指令 joystickOriginAxis_ = joyCmdState;
     setJoyCmdState(joystickOriginAxisFilter_);
-    // 这个好像没有用到
     joystickOriginAxisPre_ = joystickOriginAxisFilter_;
-
-    // 按键处理
-    // 触发服务调用，初始化人形机器人控制器（real_initial_start 服务） 这个服务是执行机器人站立
-    // 机器人cali状态执行一次机器人缩腿，再执行一次机器人站立，用户需要在站立过程中用手扶住机器人以确保安全，实机才有该服务
-    // 对于h12遥控器来说，就是右上角的拨杆拨到最左边，这个时候就是相当于按下start按钮
     if (!oldJoyMsg_.buttons[joyButtonMap["BUTTON_START"]] && joy_msg->buttons[joyButtonMap["BUTTON_START"]])
     {
       ros::ServiceClient client = controllerNh_.serviceClient<std_srvs::Trigger>("/humanoid_controller/real_initial_start");
@@ -663,11 +759,8 @@ namespace humanoid_controller
         ROS_ERROR("Failed to callRealInitializeSrv service");
       }
     }
-
-    // 命令数据
     CommandData CommandData_;
     CommandData_ = getCommandData();
-    // 无法行走，注意这个不是站立指令
     if (!oldJoyMsg_.buttons[joyButtonMap["BUTTON_STANCE"]] && joy_msg->buttons[joyButtonMap["BUTTON_STANCE"]])
     {
       Walkenable_ = false;
@@ -675,13 +768,11 @@ namespace humanoid_controller
       ROS_INFO("[RL mode] Walkenable: False");
       ROS_INFO("[RL mode] Switch to Stance");
     }
-    // walk使能
     else if (!oldJoyMsg_.buttons[joyButtonMap["BUTTON_LB"]] && joy_msg->buttons[joyButtonMap["BUTTON_LB"]])
     {
       Walkenable_ = true;
       ROS_INFO("[RL mode] Walkenable: True");
     }
-    // 是否使用trot gait,在rl控制中好像没有什么用
     else if (!oldJoyMsg_.buttons[joyButtonMap["BUTTON_TROT"]] && joy_msg->buttons[joyButtonMap["BUTTON_TROT"]])
     {
       if (Walkenable_)
@@ -702,16 +793,12 @@ namespace humanoid_controller
         ROS_INFO("[RL mode] Walkenable is false, cannot switch to Trot");
       }
     }
-    // 启动强化学习控制，好像启动后就不能够切回来了
     else if (!oldJoyMsg_.buttons[joyButtonMap["BUTTON_RL"]] && joy_msg->buttons[joyButtonMap["BUTTON_RL"]])
     {
       is_rl_controller_ = true;
       printRLparam();
     }
     // setCommandData(CommandData_);
-
-
-    // 这个应该是停止消息发送，话题名称是/stop_robot ,目前好像只有joysticksimulator节点有订阅这个消息
     if (joy_msg->buttons[joyButtonMap["BUTTON_BACK"]])
       for (int i = 0; i < 5; i++)
       {
@@ -721,10 +808,8 @@ namespace humanoid_controller
         stop_pub.publish(stop_msg);
         ros::Duration(0.1).sleep();
       }
-    // 存储旧的joy消息
     oldJoyMsg_ = *joy_msg;
   }
-
   void humanoidController::starting(const ros::Time &time)
   {
     initial_status_ = initialState_;
@@ -1207,13 +1292,9 @@ namespace humanoid_controller
   }
   void humanoidController::updatePhase(const CommandData &CommandData_)
   {
-    double eps = 0.2;
-    // phase_ = CommandData_.cmdStance_ == 1 ? 0 : episodeLength_ * dt_ / cycleTime_;
-    phase_ = episodeLength_ * dt_ / cycleTime_;
-    commandPhase_(0) = sin(2 * M_PI * phase_) * (1 - CommandData_.cmdStance_);
-    commandPhase_(1) = sin(2 * M_PI * (phase_ + 0.5))* (1 - CommandData_.cmdStance_);
-
-    commandPhase_(2) = commandPhase_(0) / (sqrt(commandPhase_(0) * commandPhase_(0) + eps*eps));
+    phase_ = CommandData_.cmdStance_ == 1 ? 0 : episodeLength_ * dt_ / cycleTime_;
+    commandPhase_(0) = sin(2 * M_PI * phase_);
+    commandPhase_(1) = cos(2 * M_PI * phase_);
     rl_plannedMode_ = (commandPhase_(0) > 0) ? ModeNumber::SF : (commandPhase_(0) < 0) ? ModeNumber::FS
                                                                                        : ModeNumber::SS;
   }
@@ -1223,9 +1304,8 @@ namespace humanoid_controller
     CommandData_ = getCommandData();
     updatePhase(CommandData_);
     // Extract state data
-    // angle(zyx),pos(xyz),jointPos[info_.actuatedDofNum],angularVel(zyx),linervel(xyz),jointVel[info_.actuatedDofNum]
     const Eigen::Vector3d baseEuler(state_est(2), state_est(1), state_est(0));
-    const Eigen::Vector3d baseAngVel(state_est(6 + jointNum_ + jointArmNum_ + 0),
+    const Eigen::Vector3d baseAngVel(state_est(6 + jointNum_ + jointArmNum_ ),
                                      state_est(6 + jointNum_ + jointArmNum_ + 1),
                                      state_est(6 + jointNum_ + jointArmNum_ + 2));
     const Eigen::Vector3d baseLineVel = state_est.segment(9 + jointNum_ + jointArmNum_, 3);
@@ -1258,8 +1338,6 @@ namespace humanoid_controller
     // Normalize command
     CommandData_.scale();
     Eigen::VectorXd tempCommand_ = CommandData_.getCommand();
-    // stand command is 0 , walking command is 1
-    tempCommand_(3) = 1 - tempCommand_(3); // 0-1 -> 1-0
     // Populate singleInputDataMap_
     const std::map<std::string, Eigen::VectorXd> singleInputDataMap_ = {
         {"baseEuler", baseEuler},

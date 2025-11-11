@@ -146,7 +146,7 @@ namespace HighlyDynamic
             motors_disable.resize(num_joints);
         }
         std::string getEcmasterType(int robot_version_int=40);
-
+        std::string getIMUType(int robot_version_int=40);
     };
 
     struct FilterSettings

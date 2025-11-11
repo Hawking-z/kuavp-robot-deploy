@@ -297,3 +297,18 @@ install(DIRECTORY include/${PROJECT_NAME}/
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
+
+
+# 外力测试节点
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(JSONCPP jsoncpp)
+
+add_executable(force_disturbance_test_node src/force_disturbance_test_node.cpp)
+
+target_link_libraries(force_disturbance_test_node 
+    ${catkin_LIBRARIES}
+    ${JSONCPP_LIBRARIES}
+)
+
+# 如果需要的话，添加包含目录
+target_include_directories(force_disturbance_test_node PRIVATE ${JSONCPP_INCLUDE_DIRS})

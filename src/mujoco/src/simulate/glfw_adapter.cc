@@ -154,7 +154,7 @@ void GlfwAdapter::SetClipboardString(const char* text) {
 
 void GlfwAdapter::SetVSync(bool enabled){
 #ifdef __APPLE__
-  Glfw().glfwSwapInterval(0);
+  Glfw().glfwSwapInterval(1);
   if (enabled && !core_video_.has_value()) {
     core_video_.emplace(window_);
   } else if (!enabled && core_video_.has_value()) {

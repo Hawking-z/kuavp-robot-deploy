@@ -2073,6 +2073,22 @@ void Simulate::Sync() {
   // update scene
   if (!is_passive_) {
     mjv_updateScene(m_, d_, &this->opt, &this->pert, &this->cam, mjCAT_ALL, &this->scn);
+
+    if (user_scn) {
+      int ngeom = user_scn->ngeom;
+      int maxgeom = this->scn.maxgeom - this->scn.ngeom;
+      if (ngeom > maxgeom) {
+        mj_warning(d_, mjWARN_VGEOMFULL, this->scn.maxgeom);
+        ngeom = maxgeom;
+      }
+      if (ngeom > 0) {
+        std::memcpy(this->scn.geoms + this->scn.ngeom,
+                    user_scn->geoms,
+                    sizeof(mjvGeom) * ngeom);
+        this->scn.ngeom += ngeom;
+      }
+    }
+
   } else {
     mjv_updateSceneState(m_, d_, &this->opt, &scnstate_);
 
@@ -2288,6 +2304,19 @@ void Simulate::LoadOnRenderThread() {
   if (!is_passive_) {
     mjv_updateScene(this->m_, this->d_,
                     &this->opt, &this->pert, &this->cam, mjCAT_ALL, &this->scn);
+    if (user_scn) {
+      int ngeom = user_scn->ngeom;
+      int maxgeom = this->scn.maxgeom - this->scn.ngeom;
+      if (ngeom > maxgeom) {
+        ngeom = maxgeom;
+      }
+      if (ngeom > 0) {
+        std::memcpy(this->scn.geoms + this->scn.ngeom,
+                    user_scn->geoms,
+                    sizeof(mjvGeom) * ngeom);
+        this->scn.ngeom += ngeom;
+      }
+    }
   } else {
     mjv_updateSceneState(this->m_, this->d_, &this->opt, &this->scnstate_);
   }

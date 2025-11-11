@@ -37,9 +37,9 @@
     "imu_in_torso": [0, 0, 0],
     "isParallelArm":false,
     "only_half_up_body":false,
-    "use_anthropomorphic_gait":false,
+    "use_anthropomorphic_gait":true,
     "joint_kp": [220, 100, 224, 224, 580, 580, 220, 100, 224, 224, 580, 580, 586, 586],
-    "joint_kd": [2979, 5376, 10794, 3598, 3136, 3136, 2979, 5376, 10794, 3598, 3136, 3136, 2880, 2880],
+    "joint_kd": [894, 2688, 2699, 2399, 570, 570, 894, 2688, 2699, 2399, 570, 570, 2880, 2880],
     "MOTORS_TYPE":[
         "PA100_18", "PA100", "PA100", "PA100_18", "CK", "CK",
         "PA100_18", "PA100", "PA100", "PA100_18", "CK", "CK",

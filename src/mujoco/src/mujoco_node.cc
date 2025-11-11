@@ -42,6 +42,7 @@
 #include <csignal>
 #include <atomic>
 #include <queue>
+#include <std_srvs/Empty.h>
 
 //  ************************* lcm ****************************
 
@@ -97,6 +98,130 @@ namespace
   // ******
   low_cmd_t recvCmd;
   // ******
+  // 添加外力可视化相关的全局变量和函数
+  mjvScene* user_scn = nullptr;
+  bool force_arrow_active = false;
+  mjtNum force_arrow_pos[3] = {0, 0, 0};
+  mjtNum force_arrow_force[3] = {0, 0, 0};
+  bool g_reset_in_progress = false;
+  ros::Time g_reset_start_time;
+  double g_reset_lockout_duration = 5.0;
+  // 初始化用户场景的函数
+  void initUserScene() {
+      if (!user_scn) {
+          user_scn = (mjvScene*)malloc(sizeof(mjvScene));
+          mjv_defaultScene(user_scn);
+          mjv_makeScene(nullptr, user_scn, 10); // 最多10个自定义几何体
+          std::cout << "用户场景初始化完成" << std::endl;
+      }
+  }
+    // 更新外力箭头的函数
+// 更新外力箭头的函数
+void updateForceArrow() {
+  if (!user_scn) return;
+  
+  // 清除之前的几何体
+  user_scn->ngeom = 0;
+  
+  if (!force_arrow_active) return;
+  
+  // 计算外力大小
+  double force_mag = sqrt(force_arrow_force[0]*force_arrow_force[0] + 
+                         force_arrow_force[1]*force_arrow_force[1] + 
+                         force_arrow_force[2]*force_arrow_force[2]);
+  
+  if (force_mag < 1.0) return; // 力太小不显示
+  
+  // 计算箭头参数
+  double scale = 0.001; // 调整合适的比例
+  mjtNum end_pos[3];
+  for (int i = 0; i < 3; i++) {
+      end_pos[i] = force_arrow_pos[i] + force_arrow_force[i] * scale;
+  }
+  
+  // 添加箭头主体（线条）
+  if (user_scn->ngeom < user_scn->maxgeom) {
+      mjvGeom* arrow = &user_scn->geoms[user_scn->ngeom++];
+      
+    
+      memset(arrow, 0, sizeof(mjvGeom)); // 清零所有字段
+      
+      arrow->type = mjGEOM_LINE;
+      arrow->dataid = -1;        // 重要：设置为-1表示不是模型几何体
+      arrow->objtype = mjOBJ_UNKNOWN;
+      arrow->objid = -1;
+      arrow->category = mjCAT_DECOR;  // 装饰类别
+      arrow->texid = -1;
+      arrow->texuniform = 0;
+      arrow->texrepeat[0] = 1;
+      arrow->texrepeat[1] = 1;
+      arrow->emission = 0;
+      arrow->specular = 0.5;
+      arrow->shininess = 0.5;
+      arrow->reflectance = 0;
+      
+      arrow->size[0] = 0.01; // 线条粗细
+      arrow->size[1] = 0;
+      arrow->size[2] = 0;
+      
+      // 设置位置
+      for (int i = 0; i < 3; i++) {
+          arrow->pos[i] = (float)force_arrow_pos[i];      // 起点
+          arrow->pos[3 + i] = (float)end_pos[i];          // 终点
+      }
+      
+      // 设置颜色（亮红色）
+      arrow->rgba[0] = 1.0f;
+      arrow->rgba[1] = 0.0f;
+      arrow->rgba[2] = 0.0f;
+      arrow->rgba[3] = 1.0f;
+      
+      // 清空标签
+      arrow->label[0] = '\0';
+  }
+  
+  // 添加箭头头部（球形）
+  if (user_scn->ngeom < user_scn->maxgeom) {
+      mjvGeom* head = &user_scn->geoms[user_scn->ngeom++];
+      
+      // 🔥 完全初始化几何体结构
+      memset(head, 0, sizeof(mjvGeom)); // 清零所有字段
+      
+      head->type = mjGEOM_SPHERE;
+      head->dataid = -1;        // 重要：设置为-1表示不是模型几何体
+      head->objtype = mjOBJ_UNKNOWN;
+      head->objid = -1;
+      head->category = mjCAT_DECOR;  // 装饰类别
+      head->texid = -1;
+      head->texuniform = 0;
+      head->texrepeat[0] = 1;
+      head->texrepeat[1] = 1;
+      head->emission = 0;
+      head->specular = 0.5;
+      head->shininess = 0.5;
+      head->reflectance = 0;
+      
+      head->size[0] = 0.03; // 球半径
+      head->size[1] = 0;
+      head->size[2] = 0;
+      
+      // 设置位置
+      for (int i = 0; i < 3; i++) {
+          head->pos[i] = (float)end_pos[i];
+      }
+      
+      // 箭头头部颜色（更亮的红色）
+      head->rgba[0] = 1.0f;
+      head->rgba[1] = 0.3f;
+      head->rgba[2] = 0.3f;
+      head->rgba[3] = 1.0f;
+      
+      // 清空标签
+      head->label[0] = '\0';
+  }
+  
+}
+
 
   // control noise variables
   // mjtNum* ctrlnoise = nullptr;
@@ -461,6 +586,7 @@ namespace
     queueMutex.unlock();
     uint64_t step_count = 0;
     sim_time = ros::Time::now();
+    sim.user_scn = user_scn;
     // run until asked to exit
     ros::Rate loop_rate(frequency);
     while (!sim.exitrequest.load())
@@ -470,7 +596,7 @@ namespace
       //   sim.LoadMessage(sim.dropfilename);
       //   mjModel* mnew = LoadModel(sim.dropfilename, sim);
       //   sim.droploadrequest.store(false);
-
+      
       //   mjData* dnew = nullptr;
       //   if (mnew) dnew = mj_makeData(mnew);
       //   if (dnew) {
@@ -559,6 +685,17 @@ namespace
         // run only if model is present
         if (m)
         {
+                
+          if (force_arrow_active && m && d) {
+            int body_id = 1; // 机器人躯干，根据你的模型调整
+            if (body_id < m->nbody) {
+                mju_copy3(force_arrow_pos, d->xpos + 3 * body_id);
+            }
+        }
+        if (user_scn) {
+          updateForceArrow();
+        }
+
           // running
           if (sim.run)
           {
@@ -571,17 +708,27 @@ namespace
 
             // ****************************
             // external wrench
-            if (external_wrench_updated_)
-            {
-              std::cout << "Applying external wrench!\n";
+            // if (external_wrench_updated_)
+            // {
+          
               d->xfrc_applied[6 + 0] = external_wrench_.force.x;
               d->xfrc_applied[6 + 1] = external_wrench_.force.y;
               d->xfrc_applied[6 + 2] = external_wrench_.force.z;
               d->xfrc_applied[6 + 3] = external_wrench_.torque.x;
               d->xfrc_applied[6 + 4] = external_wrench_.torque.y;
               d->xfrc_applied[6 + 5] = external_wrench_.torque.z;
-              external_wrench_updated_ = false;
-            }
+
+  
+              
+              // external_wrench_updated_ = false;
+
+              double force_mag = sqrt(external_wrench_.force.x*external_wrench_.force.x + 
+              external_wrench_.force.y*external_wrench_.force.y + 
+              external_wrench_.force.z*external_wrench_.force.z);
+              std::cout << "外力: [" << external_wrench_.force.x << ", " 
+                << external_wrench_.force.y << ", " << external_wrench_.force.z 
+                << "] 大小: " << force_mag << " N" << std::endl;
+            // }
             // ****************************
             // control
             bool updated = false;
@@ -725,25 +872,54 @@ bool handleSimStart(std_srvs::SetBool::Request &req,
   sim->run = req.data;
   return true;
 }
-void jointCmdCallback(const kuavo_msgs::jointCmd::ConstPtr &msg)
+bool handleReset(std_srvs::Empty::Request &, std_srvs::Empty::Response &)
 {
-  // std::cout << "Received jointCmd: " << msg->tau[0] << std::endl;
-  std::vector<double> tau(numJoints);
-  for (size_t i = 0; i < numJoints; i++)
-  {
-    tau[i] = msg->tau[i];
+  if (!m || !d) return false;                
+
+  const std::lock_guard<std::recursive_mutex> lock(sim->mtx);
+
+
+  mj_resetData(m, d);                         // 相当于 GUI 的 “Reset”
+
+
+  mj_forward(m, d);                        
+
+
+  return true;
+}
+
+
+void jointCmdCallback(const kuavo_msgs::jointCmd::ConstPtr &msg) {
+  std::vector<double> tau(numJoints, 0.0); // 默认全部为0
+  
+  // 只处理有效的控制命令
+  for (size_t i = 0; i < numJoints && i < msg->tau.size(); i++) {
+    if (!std::isnan(msg->tau[i]) && !std::isinf(msg->tau[i]) && std::abs(msg->tau[i]) <= 500.0) {
+      tau[i] = msg->tau[i];
+    }
+    // 无效命令直接忽略，保持为0
   }
+  
   std::lock_guard<std::mutex> lock(queueMutex);
-  // controlCommands.push(tau);
   joint_tau_cmd = tau;
   cmd_updated = true;
 }
+
+
 void extWrenchCallback(const geometry_msgs::Wrench::ConstPtr &msg)
 {
   // std::cout << "Received jointCmd: " << msg->tau[0] << std::endl;
   std::cout << "in ext wrench callback!\n";
   external_wrench_ = *msg;
   external_wrench_updated_ = true;
+  // 更新外力箭头数据
+  force_arrow_active = true;
+  force_arrow_force[0] = msg->force.x;
+  force_arrow_force[1] = msg->force.y;
+  force_arrow_force[2] = msg->force.z;
+  
+  double force_mag = sqrt(msg->force.x*msg->force.x + msg->force.y*msg->force.y + msg->force.z*msg->force.z);
+  std::cout << "外力箭头数据已更新，大小: " << force_mag << " N" << std::endl;
 }
 void apply_wrench_to_link(mjModel* m, mjData* d, const char* link_name, const mjtNum* force, const mjtNum* torque) {
   // 获取 link 的索引
@@ -778,6 +954,7 @@ void PhysicsThread(mj::Simulate *sim, const char *filename)
     m->opt.timestep = 1 / frequency;
     numJoints = m->nq - 7;
     std::cout << "numJoints: " << numJoints << std::endl;
+    initUserScene();
     if (d)
     {
       // ********************************
@@ -806,6 +983,7 @@ void PhysicsThread(mj::Simulate *sim, const char *filename)
   pubTimeDiff = g_nh_ptr->advertise<std_msgs::Float64>("/monitor/time_cost/mujoco_loop_time", 10);
   // // 创建服务
   ros::ServiceServer service = g_nh_ptr->advertiseService("sim_start", handleSimStart);
+  ros::ServiceServer reset_service = g_nh_ptr->advertiseService("reset_simulation", handleReset);
 
   // // 创建订阅器
   ros::Subscriber jointCmdSub = g_nh_ptr->subscribe("/joint_cmd", 10, jointCmdCallback);
